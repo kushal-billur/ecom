@@ -18,20 +18,19 @@ app.get('/api/*', (req, res) => {
 });
 
 // Try to serve static files if they exist
-const staticPath = path.join(__dirname, '../client/dist');
-try {
-  if (fs.existsSync(staticPath)) {
-    app.use(express.static(staticPath));
-    console.log('📦 Serving static files from /client/dist');
-  }
-} catch (err) {
-  console.log('⚠️  No static files found at /client/dist');
+const staticPath = path.join(__dirname, '..', 'client', 'dist');
+const indexPath = path.join(staticPath, 'index.html');
+
+// Serve static files if the directory exists
+if (fs.existsSync(staticPath)) {
+  console.log(`📦 Serving static files from: ${staticPath}`);
+  app.use(express.static(staticPath));
+} else {
+  console.log('⚠️  No static files found at:', staticPath);
 }
 
 // Frontend catch-all - serve index.html for SPA routing or fallback
 app.get('*', (req, res) => {
-  // Try to serve index.html if it exists
-  const indexPath = path.join(__dirname, '../client/dist/index.html');
   if (fs.existsSync(indexPath)) {
     return res.sendFile(indexPath);
   }
@@ -47,13 +46,18 @@ app.get('*', (req, res) => {
           h1 { color: #333; }
           .status { color: green; font-weight: bold; }
           code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+          pre { background: #f8f8f8; padding: 15px; border-radius: 5px; 
+                text-align: left; max-width: 600px; margin: 20px auto; }
         </style>
       </head>
       <body>
         <h1>QuickCart Backend is Running</h1>
         <p>API is up and running at <span class="status">/api</span></p>
         <p>Try: <a href="/api/health">/api/health</a></p>
-        <p><small>Frontend is not built. Run <code>npm run build</code> in the client directory.</small></p>
+        <div>
+          <p><small>Frontend is not built or not in the expected location.</small></p>
+          <pre>Expected path: ${staticPath}</pre>
+        </div>
       </body>
     </html>
   `);
@@ -61,12 +65,17 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Error:', err.stack);
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 QuickCart Server running on port ${PORT}`);
   console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Access: http://localhost:${PORT}`);
+  console.log(`📂 Static files path: ${staticPath}`);
+  console.log(`📄 Index file: ${fs.existsSync(indexPath) ? 'Found' : 'Not found'}`);
 });
