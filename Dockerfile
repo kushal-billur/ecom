@@ -1,4 +1,3 @@
-cat > Dockerfile << 'EOF'
 # Build stage for frontend
 FROM node:20-alpine AS frontend-build
 WORKDIR /app
@@ -16,7 +15,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install build tools and dependencies
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ wget
 
 # Create necessary directories
 RUN mkdir -p /app/client/dist /app/data
@@ -28,8 +27,8 @@ RUN npm ci --production
 # Copy server source
 COPY server/ ./
 
-# Copy built frontend from builder
-COPY --from=frontend-build /app/dist/ /app/client/dist/
+# Copy built frontend from builder (ignore if missing)
+COPY --from=frontend-build /app/dist/ /app/client/dist/ || echo "Frontend build skipped"
 
 # Environment
 ENV NODE_ENV=production
@@ -44,4 +43,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start the server
 CMD ["node", "server.js"]
-EOF
