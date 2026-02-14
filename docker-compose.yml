@@ -1,3 +1,4 @@
+cat > docker-compose.yml << 'EOF'
 version: '3.8'
 
 services:
@@ -9,17 +10,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - JWT_SECRET=${JWT_SECRET:-quickcart-production-secret-key-2024}
     volumes:
       - sqlite-data:/app/server/data
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
 volumes:
   sqlite-data:
     driver: local
+EOF
