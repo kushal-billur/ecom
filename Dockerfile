@@ -18,6 +18,9 @@ WORKDIR /app
 # Install build tools and dependencies
 RUN apk add --no-cache python3 make g++
 
+# Create necessary directories
+RUN mkdir -p /app/client/dist /app/data
+
 # Copy server files
 COPY server/package*.json ./
 RUN npm ci --production
@@ -25,11 +28,8 @@ RUN npm ci --production
 # Copy server source
 COPY server/ ./
 
-# Copy built frontend
-COPY --from=frontend-build /app/dist ./client/dist
-
-# Create data directory
-RUN mkdir -p data
+# Copy built frontend from builder
+COPY --from=frontend-build /app/dist/ /app/client/dist/
 
 # Environment
 ENV NODE_ENV=production
